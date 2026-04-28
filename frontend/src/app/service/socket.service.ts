@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import SockJS from 'sockjs-client';
-import * as Stomp from 'stompjs';
+import { CompatClient, Stomp } from '@stomp/stompjs';
 import { Subject } from 'rxjs';
 import { PlayStatePayload, QueueStatePayload, SeekStatePayload, SyncRequestPayload } from '../models/types';
 import { environment } from '../../environments/environment';
@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
     providedIn: 'root'
 })
 export class SocketService {
-    private stompClient: any;
+    private stompClient: CompatClient | null = null;
     private connected = false;
     private connectionPromise: Promise<void> | null = null;
     public messageSubject = new Subject<any>();
