@@ -20,6 +20,7 @@ import { YouTubePlayerModule } from '@angular/youtube-player';
 import { HttpClient } from '@angular/common/http';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { SvgIconButtonComponent } from '../ui/svg-icon-button/svg-icon-button.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-room',
@@ -404,7 +405,7 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
         this.activeSuggestion = null;
         this.isSearching = true;
         const encodedQuery = encodeURIComponent(normalizedQuery);
-        this.http.get<Song[]>(`http://localhost:8080/api/youtube/search?q=${encodedQuery}`).subscribe({
+        this.http.get<Song[]>(`${environment.apiBaseUrl}/api/youtube/search?q=${encodedQuery}`).subscribe({
             next: (results) => { this.searchResults = results; this.isSearching = false; },
             error: (err) => { console.error('Search failed', err); this.isSearching = false; }
         });
