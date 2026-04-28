@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lissenly - Luminous Pastel SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+        .mesh-gradient {
+            background: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            /* Using a softer lighter version for "Brighter UI" */
+            background: linear-gradient(135deg, #f5f3ff 0%, #fdf2f8 50%, #f0f9ff 100%);
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+        .mesh-blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            filter: blur(100px);
+            opacity: 0.4;
+            border-radius: 50%;
+            z-index: -1;
+        }
+        .blob-1 { background: #c7d2fe; top: -10%; left: -10%; animation: float 20s infinite alternate; }
+        .blob-2 { background: #fbcfe8; bottom: -10%; right: -10%; animation: float 25s infinite alternate-reverse; }
+        .blob-3 { background: #bae6fd; top: 40%; left: 30%; animation: float 15s infinite; }
+
+        @keyframes float {
+            0% { transform: translate(0,0) scale(1); }
+            100% { transform: translate(50px, 100px) scale(1.1); }
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #6366f1, #d946ef, #fb7185);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden pt-24">
+    <div class="mesh-gradient"></div>
+    <div class="mesh-blob blob-1"></div>
+    <div class="mesh-blob blob-2"></div>
+    <div class="mesh-blob blob-3"></div>
+
+    <!-- Navbar -->
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-5xl">
+        <div class="glass px-8 py-4 rounded-full flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold">L</div>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">Lissenly<span class="text-indigo-500 text-3xl">.</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+                <a href="#" class="hover:text-indigo-500 transition-colors">Tính năng</a>
+                <a href="#" class="hover:text-indigo-500 transition-colors">Về chúng tôi</a>
+                <a href="#" class="hover:text-indigo-500 transition-colors">Cộng đồng</a>
+            </div>
+            <div>
+                <button class="bg-indigo-600 text-white px-6 py-2.5 rounded-full text-sm font-bold btn-glow">Khám phá ngay</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="max-w-7xl mx-auto px-6 text-center pt-12 pb-32">
+        <div class="inline-block px-4 py-1.5 mb-8 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-600 text-xs font-bold tracking-widest uppercase animate-fade-in">
+            Beta 2.0 đã sẵn sàng ✨
+        </div>
+        <h1 class="text-6xl md:text-8xl font-extrabold tracking-tighter text-slate-900 mb-8 leading-[1.1]">
+            Âm nhạc kết nối <br> <span class="text-gradient">Tâm hồn</span>
+        </h1>
+        <p class="max-w-2xl mx-auto text-lg md:text-xl text-slate-600 leading-relaxed mb-12">
+            Duy nhất tại Lissenly - Trải nghiệm nghe nhạc YouTube đồng bộ thời gian thực cực kỳ đơn giản, mượt mà và hoàn toàn miễn phí.
+        </p>
+        
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+            <button class="w-full md:w-auto bg-slate-900 text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
+                🚀 Bắt đầu tạo phòng
+            </button>
+            <div class="flex items-center glass p-2 rounded-2xl w-full md:w-auto">
+                <input type="text" placeholder="Mã phòng..." class="bg-transparent border-none focus:ring-0 px-4 py-2 w-full md:w-48 text-slate-800 placeholder-slate-400 font-semibold">
+                <button class="bg-indigo-500 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-600 transition-colors">Tham gia</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section (Bento Grid) -->
+    <section class="max-w-7xl mx-auto px-6 py-24">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="glass-card p-10 rounded-[2.5rem] flex flex-col items-start gap-6 border border-white/20">
+                <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-3xl">🎧</div>
+                <div>
+                    <h3 class="text-2xl font-extrabold text-slate-800 mb-4">Đồng bộ Real-time</h3>
+                    <p class="text-slate-600 leading-relaxed">
+                        Mọi người trong phòng đều nghe thấy cùng một giai điệu tại một thời điểm với độ trễ gần như bằng không.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 2 -->
+            <div class="glass-card p-10 rounded-[2.5rem] flex flex-col items-start gap-6 border border-white/20">
+                <div class="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center text-3xl">💬</div>
+                <div>
+                    <h3 class="text-2xl font-extrabold text-slate-800 mb-4">Trò chuyện trực tuyến</h3>
+                    <p class="text-slate-600 leading-relaxed">
+                        Vừa nghe nhạc vừa thảo luận về những bài hát yêu thích. Chia sẻ cảm xúc trong thời gian thực.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 3 -->
+            <div class="glass-card p-10 rounded-[2.5rem] flex flex-col items-start gap-6 border border-white/20">
+                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl">📱</div>
+                <div>
+                    <h3 class="text-2xl font-extrabold text-slate-800 mb-4">Mọi thiết bị</h3>
+                    <p class="text-slate-600 leading-relaxed">
+                        Hoạt động mượt mà trên máy tính, máy tính bảng và điện thoại. Không cần cài đặt ứng dụng.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="max-w-7xl mx-auto px-6 py-24 mb-24">
+        <div class="relative overflow-hidden glass p-16 md:p-24 rounded-[3.5rem] text-center border border-white/40">
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-200/50 blur-[80px] rounded-full"></div>
+            <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-pink-200/50 blur-[80px] rounded-full"></div>
+            
+            <h2 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-10 leading-[1.1]">
+                Sẵn sàng cho không gian <br> âm nhạc của riêng bạn?
+            </h2>
+            <p class="text-slate-600 text-lg mb-12 max-w-xl mx-auto">
+                Tham gia cùng hàng ngàn người dùng khác tại Lissenly ngay hôm nay. Hoàn toàn miễn phí.
+            </p>
+            <button class="bg-indigo-600 text-white px-12 py-5 rounded-2xl text-xl font-bold btn-glow active:scale-95 transition-all">
+                Tạo phòng miễn phí ngay 🚀
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-6 pb-24 text-center">
+        <div class="w-full h-px bg-slate-200 mb-12"></div>
+        <p class="text-slate-400 font-semibold tracking-wide uppercase text-xs mb-4">© 2026 Lissenly Team</p>
+        <div class="flex items-center justify-center gap-8 text-slate-400 font-bold">
+            <a href="#" class="hover:text-indigo-500 transition-colors">Facebook</a>
+            <a href="#" class="hover:text-indigo-500 transition-colors">TikTok</a>
+            <a href="#" class="hover:text-indigo-500 transition-colors">Instagram</a>
+        </div>
+    </footer>
+</body>
+</html>

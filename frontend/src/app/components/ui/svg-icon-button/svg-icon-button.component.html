@@ -1,0 +1,13 @@
+<button
+  class="svg-btn"
+  [attr.type]="type"
+  [class.primary]="variant === 'primary'"
+  [class.secondary]="variant === 'secondary'"
+  [class.ghost]="variant === 'ghost'"
+  [disabled]="disabled"
+  [attr.aria-label]="label"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path [attr.d]="iconPath" fill="currentColor"></path>
+  </svg>
+</button>

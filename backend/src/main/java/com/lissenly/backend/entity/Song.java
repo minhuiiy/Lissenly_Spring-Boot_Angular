@@ -11,4 +11,6 @@ public class Song {
     private String videoId;
     private String title;
     private String thumbnail;
+    private String channelTitle;
+    private boolean liked;
 }

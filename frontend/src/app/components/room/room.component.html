@@ -1,0 +1,353 @@
+<div class="room-container beige-theme" *ngIf="room">
+    <div class="nickname-overlay" *ngIf="requiresNameBeforeJoin">
+        <div class="nickname-card glass">
+            <h2>Chào mừng bạn!</h2>
+            <p>Bạn chưa đăng nhập. Hãy đặt tên trước khi vào phòng.</p>
+            <div class="input-group-large">
+                <input #nameInput placeholder="Tên của bạn..." (keyup.enter)="submitGuestName(nameInput.value)" autocomplete="off">
+                <button (click)="submitGuestName(nameInput.value)">Vào phòng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Room Content -->
+    <div class="room-wrapper" [class.blurred]="requiresNameBeforeJoin">
+        
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="nav-left">
+                <div class="logo-box">
+                    <i class="ph ph-headphones"></i>
+                </div>
+                <button class="btn-lang"><i class="ph ph-globe"></i> Tiếng Việt</button>
+                <div class="room-meta">
+                    <div class="host-info">
+                        <i class="ph ph-lock-key" *ngIf="room.isPrivate"></i>
+                        <span class="room-name">{{room.name || 'abc'}}</span>
+                    </div>
+                    <div class="meta-details">
+                        <span class="id-tag"><i class="ph ph-hash"></i> {{room.roomId}}</span>
+                        <span class="viewers"><i class="ph ph-users"></i> {{ room.members?.length || 0 }}</span>
+                        <span class="host-badge" *ngIf="isHost">HOST</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <div class="action-buttons">
+                    <button class="btn-action btn-compact" type="button" (click)="openShareDialog()"><i class="ph ph-share-network"></i> Chia sẻ</button>
+                    <button class="btn-action btn-compact"><i class="ph ph-file-text"></i> Bưu thiếp phòng</button>
+                    <button class="btn-action btn-compact"><i class="ph ph-palette"></i> Giao diện phòng</button>
+                    <button class="btn-action highlight btn-compact"><i class="ph ph-coffee"></i> + Nhận Cafe</button>
+                    <button class="btn-action toggle-off btn-compact"><i class="ph ph-megaphone"></i> Dân chủ OFF</button>
+                    <button class="btn-action btn-compact" type="button" (click)="openSettingsDialog()"><i class="ph ph-gear"></i> Cài đặt</button>
+                    <button class="btn-action exit" (click)="router.navigate(['/'])"><i class="ph ph-sign-out"></i> Rời phòng</button>
+                </div>
+                <button class="sidebar-toggle" type="button" (click)="isSidebarOpen = !isSidebarOpen">
+                    <i class="ph" [class.ph-x]="isSidebarOpen" [class.ph-sidebar]="!isSidebarOpen"></i>
+                    <span>{{ isSidebarOpen ? 'Đóng' : 'Menu' }}</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Center Content: Waiting Space or Player -->
+            <main class="center-content">
+                <!-- Waiting Space View (Visible when playlist is empty) -->
+                <div class="waiting-space" *ngIf="room.playlist.length === 0">
+                    <div class="illustration-container">
+                        <!-- Decorations -->
+                        <div class="deco notes-left"><i class="ph ph-music-notes"></i></div>
+                        <div class="deco notes-right"><i class="ph ph-music-note"></i></div>
+                        <div class="deco headphones-bottom"><i class="ph ph-headphones"></i></div>
+                        
+                        <!-- Main Turntable Illustration (CSS-based placeholder) -->
+                        <div class="turntable-illustration">
+                            <div class="record-disk"></div>
+                            <div class="stylus"></div>
+                        </div>
+                    </div>
+                    <h2 class="waiting-title">Không gian chờ</h2>
+                    <p class="waiting-subtitle">Host chưa phát bài nào. Hãy thư giãn hoặc yêu cầu bài hát bên cột phải nhé!</p>
+                </div>
+
+                <!-- Player View (Visible when music is playing) -->
+                <div class="player-view" [hidden]="room.playlist.length === 0">
+                    <div class="video-container glass">
+                        <youtube-player #player [videoId]="currentVideoId || room.playlist[room.currentSongIndex]?.videoId"
+                            [playerVars]="playerVars"
+                            (ready)="onPlayerReady()"
+                            (stateChange)="onStateChange($event)" [width]="1000" [height]="560">
+                        </youtube-player>
+                    </div>
+                    <div class="now-playing-bar" *ngIf="room.playlist[room.currentSongIndex]">
+                        <div class="np-left">
+                            <div class="np-dots">
+                                <span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                            <div class="np-meta">
+                                <h2>{{ room.playlist[room.currentSongIndex].title }}</h2>
+                                <div class="np-timeline">
+                                    <span>{{ formatTime(player?.getCurrentTime?.() || room.currentTime || 0) }}</span>
+                                    <input
+                                        class="np-progress"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="0.1"
+                                        [value]="currentProgress"
+                                        (input)="seekByProgress($event)"
+                                        aria-label="Tiến trình phát"
+                                    />
+                                    <span>{{ formatTime(player?.getDuration?.() || 0) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="np-controls">
+                            <button type="button" class="np-icon-btn" aria-label="Âm lượng" (click)="toggleMute()">
+                                <i class="ph" [class.ph-speaker-high]="!isMuted" [class.ph-speaker-slash]="isMuted"></i>
+                            </button>
+                            <input
+                                class="np-volume"
+                                type="range"
+                                min="0"
+                                max="100"
+                                step="1"
+                                [value]="volume"
+                                (input)="onVolumeChange($event)"
+                                aria-label="Điều chỉnh âm lượng"
+                            />
+                            <button type="button" class="np-icon-btn" aria-label="Đặt lại âm lượng" (click)="resetVolume()">
+                                <i class="ph ph-speaker-simple-x"></i>
+                            </button>
+                            <button type="button" class="np-icon-btn" aria-label="Phát lại" (click)="restartSong()"><i class="ph ph-arrow-clockwise"></i></button>
+                            <app-svg-icon-button
+                                label="Phát/tạm dừng"
+                                [iconPath]="playPauseIconPath"
+                                variant="primary"
+                                (click)="togglePlayPause()"
+                            ></app-svg-icon-button>
+                            <app-svg-icon-button
+                                label="Bài tiếp theo"
+                                [iconPath]="nextIconPath"
+                                variant="secondary"
+                                (click)="nextSong()"
+                            ></app-svg-icon-button>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+
+            <!-- Sidebar Content -->
+            <aside class="right-sidebar" [class.open]="isSidebarOpen">
+                <div class="sidebar-tabs">
+                    <button class="tab-btn" [class.active]="activeTab === 'playlist'" (click)="activeTab = 'playlist'">
+                        <i class="ph ph-list-bullets"></i> PLAYLIST ({{room.playlist.length}})
+                    </button>
+                    <button class="tab-btn" [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+                        <i class="ph ph-chat-circle"></i> CHAT
+                    </button>
+                    <div class="tab-indicator" [style.transform]="activeTab === 'chat' ? 'translateX(100%)' : 'translateX(0)'"></div>
+                </div>
+
+                <!-- Search & Suggestions Area -->
+                <div class="sidebar-body">
+                    <div class="members-panel">
+                        <div class="members-panel-header">
+                            <h4>Thành viên trong phòng</h4>
+                            <span>{{ room.members?.length || 0 }}</span>
+                        </div>
+                        <div class="members-list" *ngIf="room.members?.length; else noMembers">
+                            <div class="member-item" *ngFor="let member of room.members">
+                                <span class="member-dot" [class.host]="isHostMember(member)">{{ memberInitial(member) }}</span>
+                                <div class="member-meta">
+                                    <div class="member-name">{{ resolveMemberName(member) }}</div>
+                                    <div class="member-role" *ngIf="isHostMember(member)">Host</div>
+                                </div>
+                            </div>
+                        </div>
+                        <ng-template #noMembers>
+                            <div class="members-empty">Chưa có thành viên nào trong phòng.</div>
+                        </ng-template>
+                    </div>
+
+                    <!-- Playlist Tab Content -->
+                    <div class="playlist-content" *ngIf="activeTab === 'playlist'">
+                        <div class="search-section">
+                            <div class="search-input-wrapper">
+                                <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchYouTube()" placeholder="Dán link hoặc nhập tên bài hát...">
+                                <button class="btn-plus" (click)="searchYouTube()" [disabled]="isSearching">
+                                    <i class="ph ph-plus" *ngIf="!isSearching"></i>
+                                    <i class="ph ph-spinner-gap animate-spin" *ngIf="isSearching"></i>
+                                </button>
+                            </div>
+
+                            <!-- Search Results Dropdown-like list -->
+                            <div class="search-results-list" *ngIf="searchResults.length > 0">
+                                <div *ngFor="let song of searchResults" class="search-item" (click)="addSong(song)">
+                                    <img [src]="song.thumbnail" class="item-thumb">
+                                    <div class="item-meta">
+                                        <p class="item-title">{{song.title}}</p>
+                                        <p class="item-channel">{{song.channelTitle}}</p>
+                                    </div>
+                                    <i class="ph ph-plus-circle add-icon"></i>
+                                </div>
+                            </div>
+
+                            <!-- Suggestions Tags -->
+                            <div class="suggestion-tags" *ngIf="searchResults.length === 0">
+                                <span class="suggest-label"><i class="ph ph-sparkle"></i> GỢI Ý THEO CHỦ ĐỀ</span>
+                                <div class="tag-list">
+                                    <button
+                                        type="button"
+                                        class="tag"
+                                        *ngFor="let suggestion of searchSuggestions"
+                                        [class.active]="activeSuggestion === suggestion"
+                                        (click)="searchBySuggestion(suggestion)"
+                                    >
+                                        {{ suggestion }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="empty-playlist" *ngIf="room.playlist.length === 0">
+                            <div class="playlist-illustration">
+                                <i class="ph ph-music-notes-plus"></i>
+                            </div>
+                            <h3>Playlist trống</h3>
+                            <p>Chưa có bài hát nào được thêm vào Playlist.</p>
+                        </div>
+                        
+                        <div class="playlist-list" *ngIf="room.playlist.length > 0" cdkDropList [cdkDropListDisabled]="!isHost" (cdkDropListDropped)="dropSong($event)">
+                            <div *ngFor="let song of room.playlist; let i = index"
+                                 class="song-card"
+                                 cdkDrag
+                                 [class.active]="i === room.currentSongIndex"
+                                 [class.host-selectable]="isHost"
+                                 [class.drag-over]="dragOverIndex === i"
+                                 (click)="selectSong(i)"
+                                 [class.compact-card]="true">
+                                <div class="song-order">
+                                    <span class="drag-handle" cdkDragHandle *ngIf="isHost"><i class="ph ph-dots-six-vertical"></i></span>
+                                    <span class="song-index" *ngIf="!isHost">{{ i + 1 }}</span>
+                                </div>
+
+                                <div class="song-thumb-wrap">
+                                    <img [src]="song.thumbnail" class="song-thumb">
+                                    <button class="play-overlay" type="button" (click)="playSong(i, $event)" aria-label="Phát bài hát">
+                                        <i class="ph ph-play-fill"></i>
+                                    </button>
+                                </div>
+
+                                <div class="song-meta">
+                                    <div class="song-topline">
+                                        <h4 class="song-name">{{ song.title }}</h4>
+                                        <span class="song-badge" *ngIf="i === room.currentSongIndex">#{{ i + 1 }}</span>
+                                    </div>
+                                    <p class="item-channel">{{ song.channelTitle }}</p>
+                                    <div class="song-status" *ngIf="i === room.currentSongIndex">ĐANG PHÁT</div>
+                                </div>
+
+                                <div class="song-actions">
+                                    <button class="icon-btn play" *ngIf="i !== room.currentSongIndex" type="button" (click)="$event.stopPropagation(); selectSong(i)">
+                                        <i class="ph ph-play-fill"></i>
+                                    </button>
+                                    <button class="icon-btn heart" type="button" (click)="toggleLike(i, $event)">
+                                        <i class="ph" [class.ph-heart-fill]="song.liked" [class.ph-heart]="!song.liked"></i>
+                                    </button>
+                                    <button class="icon-btn delete" *ngIf="isHost" type="button" (click)="removeSong(i, $event)">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Tab Content -->
+                    <div class="chat-content" *ngIf="activeTab === 'chat'">
+                        <div class="messages-container" #scrollMe>
+                            <div *ngFor="let msg of messages" class="chat-bubble" [class.is-me]="msg.sender === userId">
+                                <span class="sender">{{msg.sender}}</span>
+                                <div class="bubble-text">{{msg.content}}</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-box">
+                            <input [(ngModel)]="newMessage" (keyup.enter)="sendChat()" placeholder="Nhắn gì đó...">
+                            <button (click)="sendChat()"><i class="ph ph-paper-plane-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<div class="settings-modal" *ngIf="isSettingsDialogOpen" (click)="closeSettingsDialog()">
+    <div class="settings-card" (click)="$event.stopPropagation()">
+        <button type="button" class="share-close" (click)="closeSettingsDialog()" aria-label="Đóng">×</button>
+        <div class="settings-title-row">
+            <i class="ph ph-gear"></i>
+            <h3>Cài đặt phòng</h3>
+        </div>
+
+        <label class="settings-field">
+            <span>TÊN PHÒNG</span>
+            <input [(ngModel)]="room.name" placeholder="Tên phòng">
+        </label>
+
+        <label class="settings-switch-card">
+            <div>
+                <strong>Phòng công khai</strong>
+                <p>Chỉ có link mới vào được</p>
+            </div>
+            <input type="checkbox" [(ngModel)]="roomVisibility" [ngModelOptions]="{standalone: true}" [checked]="roomVisibility === 'private'" (change)="roomVisibility = $any($event.target).checked ? 'private' : 'public'">
+        </label>
+
+        <label class="settings-field">
+            <span>MẬT KHẨU PHÒNG <small>(tùy chọn)</small></span>
+            <input [(ngModel)]="roomPassword" type="password" placeholder="Nhập mật khẩu hoặc để trống để xoá">
+        </label>
+
+        <div class="settings-section">
+            <span class="settings-label">GIAO DIỆN PHÒNG</span>
+            <div class="theme-grid">
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'cream'" (click)="roomTheme = 'cream'">Cream</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'midnight'" (click)="roomTheme = 'midnight'">Midnight</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'sakura'" (click)="roomTheme = 'sakura'">Sakura</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'ocean'" (click)="roomTheme = 'ocean'">Ocean</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'forest'" (click)="roomTheme = 'forest'">Forest</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'sunset'" (click)="roomTheme = 'sunset'">Sunset</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'neon'" (click)="roomTheme = 'neon'">Neon</button>
+                <button type="button" class="theme-chip" [class.active]="roomTheme === 'arctic'" (click)="roomTheme = 'arctic'">Arctic</button>
+            </div>
+        </div>
+
+        <button type="button" class="settings-save-btn" (click)="saveRoomSettings()">Lưu thay đổi</button>
+        <button type="button" class="settings-danger-btn" (click)="closeRoomForever()">Đóng phòng vĩnh viễn</button>
+    </div>
+</div>
+
+<div class="share-modal" *ngIf="isShareDialogOpen" (click)="closeShareDialog()">
+    <div class="share-card" (click)="$event.stopPropagation()">
+        <button type="button" class="share-close" (click)="closeShareDialog()" aria-label="Đóng">×</button>
+        <h3>Mời bạn bè</h3>
+        <div class="share-qr-box">
+            <img class="share-qr-image" [src]="shareQrUrl" alt="QR code">
+        </div>
+        <div class="share-room-code">Mã phòng</div>
+        <div class="share-code">{{ roomId | uppercase }}</div>
+        <div class="share-actions">
+            <button type="button" class="share-copy" (click)="copyShareLink()">
+                <i class="ph ph-copy-simple"></i>
+                Copy link
+            </button>
+            <button type="button" class="share-icon-btn" (click)="copyShareLink()" aria-label="Chia sẻ liên kết">
+                <i class="ph ph-share-network"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" *ngIf="showToast">{{ toastMessage }}</div>

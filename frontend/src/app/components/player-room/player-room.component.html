@@ -1,0 +1,48 @@
+<div class="soft-neo-container">
+  <div class="player-card">
+    <!-- Album Art Section -->
+    <div class="album-art-wrapper">
+      <div class="album-art">
+        <div class="inner-shadow-overlay"></div>
+        <div class="vinyl-disc" [class.rotating]="isPlaying"></div>
+      </div>
+    </div>
+
+    <!-- Metadata Section -->
+    <div class="song-info">
+      <h1 class="display-text">{{ songTitle }}</h1>
+      <p class="artist-text">{{ artistName }}</p>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="progress-container">
+      <div class="time-readout">
+        <span>{{ currentTime }}</span>
+        <span>{{ duration }}</span>
+      </div>
+      <div class="progress-bar-base">
+        <div class="progress-fill" [style.width.%]="progress"></div>
+        <div class="progress-knob" [style.left.%]="progress"></div>
+      </div>
+    </div>
+
+    <!-- Controls Section -->
+    <div class="controls">
+      <button class="control-btn prev-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path></svg>
+      </button>
+      
+      <button class="play-pause-btn" (click)="togglePlayback()">
+        <svg *ngIf="!isPlaying" viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M8 5v14l11-7z"></path></svg>
+        <svg *ngIf="isPlaying" viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+      </button>
+
+      <button class="control-btn next-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M16 18h2V6h-2zM6 18l8.5-6L6 6z"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="decorative-bubble bubble-1"></div>
+  <div class="decorative-bubble bubble-2"></div>
+</div>

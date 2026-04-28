@@ -1,0 +1,64 @@
+<div class="create-container">
+    <!-- Back Button -->
+    <button class="btn-back" routerLink="/">
+        <i class="ph ph-arrow-left"></i> Quay lại
+    </button>
+
+    <div class="create-card glass">
+        <header class="card-header">
+            <h2 class="title">Tạo phòng mới</h2>
+            <p class="subtitle">Bắt đầu không gian nghe nhạc của riêng bạn</p>
+        </header>
+
+        <div class="card-body">
+            <!-- User Status -->
+            <div class="user-status glass" *ngIf="userData">
+                <img [src]="userData.picture" alt="Avatar" class="mini-avatar">
+                <span class="status-text">Đã đăng nhập: <strong>{{userData.name}}</strong></span>
+            </div>
+
+            <div class="form-group">
+                <label>TÊN GỌI CỦA BẠN</label>
+                <div class="input-wrapper">
+                    <input type="text" [(ngModel)]="nickname" placeholder="Nhập tên gọi của bạn..." autocomplete="off">
+                    <i class="ph ph-user"></i>
+                </div>
+                <small *ngIf="userData">* Tên gọi được đồng bộ từ hồ sơ (Có thể chỉnh sửa).</small>
+            </div>
+
+            <div class="form-group">
+                <label>TÊN PHÒNG NHẠC</label>
+                <div class="input-wrapper">
+                    <input type="text" [(ngModel)]="roomName" placeholder="VD: Góc chill cuối tuần..." autocomplete="off">
+                    <i class="ph ph-music-notes"></i>
+                </div>
+            </div>
+
+            <div class="flex-row">
+                <div class="form-group half">
+                    <label>CHẾ ĐỘ PHÒNG</label>
+                    <div class="privacy-toggle">
+                        <button [class.active]="!isPrivate" (click)="setPrivacy(false)">
+                            <i class="ph ph-globe"></i> Công khai
+                        </button>
+                        <button [class.active]="isPrivate" (click)="setPrivacy(true)">
+                            <i class="ph ph-lock"></i> Riêng tư
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group half" *ngIf="isPrivate">
+                    <label>MẬT KHẨU PHÒNG</label>
+                    <div class="input-wrapper">
+                        <input type="password" [(ngModel)]="roomPassword" placeholder="Nhập mật khẩu..." autocomplete="new-password">
+                        <i class="ph ph-key"></i>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-create" (click)='handleCreateRoom()'>
+                Tạo Không Gian
+            </button>
+        </div>
+    </div>
+</div>

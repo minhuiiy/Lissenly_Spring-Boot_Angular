@@ -1,0 +1,46 @@
+.svg-btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 12px 22px rgba(182, 129, 118, 0.18);
+  color: #fff;
+  padding: 0;
+}
+
+.svg-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.svg-btn.primary {
+  background: #b68176;
+}
+
+.svg-btn.secondary {
+  background: #ffffff;
+  color: #b68176;
+  border: 1px solid #e7d9d4;
+}
+
+.svg-btn.ghost {
+  background: transparent;
+  color: #a38f89;
+  box-shadow: none;
+}
+
+.svg-btn:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.svg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
