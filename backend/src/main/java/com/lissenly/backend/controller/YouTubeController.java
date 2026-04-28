@@ -11,7 +11,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/youtube")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {
+        "https://lissenly-frontend.onrender.com",
+        "http://localhost:4200"
+})
 public class YouTubeController {
 
     @Value("${youtube.api.key}")
