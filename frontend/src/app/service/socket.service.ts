@@ -32,7 +32,14 @@ export class SocketService {
             this.stompClient.connect({}, () => {
                 this.connected = true;
                 console.log('Connected to WebSocket');
-                this.stompClient.subscribe(`/topic/room/${roomId}`, (message: any) => {
+                const client = this.stompClient;
+                if (!client) {
+                    this.connected = false;
+                    this.connectionPromise = null;
+                    reject(new Error('WebSocket client was not initialized'));
+                    return;
+                }
+                client.subscribe(`/topic/room/${roomId}`, (message: any) => {
                     if (message.body) {
                         this.messageSubject.next(JSON.parse(message.body));
                     }
@@ -49,50 +56,51 @@ export class SocketService {
         return this.connectionPromise;
     }
 
-    private ensureConnected() {
+    private getConnectedClient(): CompatClient {
         if (!this.stompClient || !this.connected || !this.stompClient.connected) {
             throw new Error('WebSocket connection has not been established yet');
         }
+        return this.stompClient;
     }
 
     sendChatMessage(roomId: string, message: any) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/chat/${roomId}`, {}, JSON.stringify(message));
+        const client = this.getConnectedClient();
+        client.send(`/app/chat/${roomId}`, {}, JSON.stringify(message));
     }
 
     sendPlayState(roomId: string, roomState: PlayStatePayload) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/sync/play/${roomId}`, {}, JSON.stringify(roomState));
+        const client = this.getConnectedClient();
+        client.send(`/app/sync/play/${roomId}`, {}, JSON.stringify(roomState));
     }
 
     sendSeekState(roomId: string, roomState: SeekStatePayload) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/sync/seek/${roomId}`, {}, JSON.stringify(roomState));
+        const client = this.getConnectedClient();
+        client.send(`/app/sync/seek/${roomId}`, {}, JSON.stringify(roomState));
     }
 
     sendQueueState(roomId: string, roomState: QueueStatePayload) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/sync/queue/${roomId}`, {}, JSON.stringify(roomState));
+        const client = this.getConnectedClient();
+        client.send(`/app/sync/queue/${roomId}`, {}, JSON.stringify(roomState));
     }
 
     requestSync(roomId: string, payload: SyncRequestPayload) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/sync-request/${roomId}`, {}, JSON.stringify(payload));
+        const client = this.getConnectedClient();
+        client.send(`/app/sync-request/${roomId}`, {}, JSON.stringify(payload));
     }
 
     joinRoom(roomId: string, userId: string, displayName?: string) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/member/join/${roomId}`, {}, JSON.stringify({ userId, displayName }));
+        const client = this.getConnectedClient();
+        client.send(`/app/member/join/${roomId}`, {}, JSON.stringify({ userId, displayName }));
     }
 
     leaveRoom(roomId: string, userId: string) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/member/leave/${roomId}`, {}, JSON.stringify({ userId }));
+        const client = this.getConnectedClient();
+        client.send(`/app/member/leave/${roomId}`, {}, JSON.stringify({ userId }));
     }
 
     sendAddSong(roomId: string, song: any) {
-        this.ensureConnected();
-        this.stompClient.send(`/app/playlist/add/${roomId}`, {}, JSON.stringify(song));
+        const client = this.getConnectedClient();
+        client.send(`/app/playlist/add/${roomId}`, {}, JSON.stringify(song));
     }
 
     disconnect() {
