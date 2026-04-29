@@ -184,4 +184,15 @@ public class MessageController {
         message.setSeeking(false);
         return message;
     }
+
+    @MessageMapping("/voice/signal/{roomId}")
+    public void relayVoiceSignal(@DestinationVariable String roomId, @Payload Map<String, Object> payload) {
+        if (payload == null) {
+            return;
+        }
+
+        Map<String, Object> signal = new HashMap<>(payload);
+        signal.put("roomId", roomId);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, signal);
+    }
 }

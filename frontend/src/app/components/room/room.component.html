@@ -36,6 +36,14 @@
             <div class="nav-right">
                 <div class="action-buttons">
                     <button class="btn-action btn-compact" type="button" (click)="openShareDialog()"><i class="ph ph-share-network"></i> Chia sẻ</button>
+                    <button class="btn-action btn-compact" type="button" (click)="toggleVoiceChat()">
+                        <i class="ph" [class.ph-microphone]="!isVoiceEnabled" [class.ph-phone-disconnect]="isVoiceEnabled"></i>
+                        {{ isVoiceEnabled ? 'Rời voice' : 'Vào voice' }}
+                    </button>
+                    <button class="btn-action btn-compact" type="button" [disabled]="!isVoiceEnabled" (click)="toggleMicMute()">
+                        <i class="ph" [class.ph-microphone]="!isMicMuted" [class.ph-microphone-slash]="isMicMuted"></i>
+                        {{ isMicMuted ? 'Bật mic' : 'Tắt mic' }}
+                    </button>
                     <button class="btn-action btn-compact"><i class="ph ph-file-text"></i> Bưu thiếp phòng</button>
                     <button class="btn-action btn-compact"><i class="ph ph-palette"></i> Giao diện phòng</button>
                     <button class="btn-action highlight btn-compact"><i class="ph ph-coffee"></i> + Nhận Cafe</button>

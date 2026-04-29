@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import SockJS from 'sockjs-client';
 import { CompatClient, Stomp } from '@stomp/stompjs';
 import { Subject } from 'rxjs';
-import { PlayStatePayload, QueueStatePayload, SeekStatePayload, SyncRequestPayload } from '../models/types';
+import { PlayStatePayload, QueueStatePayload, SeekStatePayload, SyncRequestPayload, VoiceSignalPayload } from '../models/types';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -26,8 +26,10 @@ export class SocketService {
         }
 
         this.connectionPromise = new Promise((resolve, reject) => {
-            const socket = new SockJS(`${environment.apiBaseUrl}/ws`);
-            this.stompClient = Stomp.over(socket);
+            const wsFactory = () => new SockJS(`${environment.apiBaseUrl}/ws`);
+            this.stompClient = Stomp.over(wsFactory);
+            this.stompClient.reconnect_delay = 5000;
+            this.stompClient.debug = () => {};
 
             this.stompClient.connect({}, () => {
                 this.connected = true;
@@ -101,6 +103,11 @@ export class SocketService {
     sendAddSong(roomId: string, song: any) {
         const client = this.getConnectedClient();
         client.send(`/app/playlist/add/${roomId}`, {}, JSON.stringify(song));
+    }
+
+    sendVoiceSignal(roomId: string, signal: VoiceSignalPayload) {
+        const client = this.getConnectedClient();
+        client.send(`/app/voice/signal/${roomId}`, {}, JSON.stringify(signal));
     }
 
     disconnect() {

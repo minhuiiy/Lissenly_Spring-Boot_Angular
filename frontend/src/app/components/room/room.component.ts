@@ -20,6 +20,7 @@ import { YouTubePlayerModule } from '@angular/youtube-player';
 import { HttpClient } from '@angular/common/http';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { SvgIconButtonComponent } from '../ui/svg-icon-button/svg-icon-button.component';
+import { VoiceChatService } from '../../service/voice-chat.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -54,6 +55,8 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
     dragOverIndex: number | null = null;
     draggedIndex: number | null = null;
     isMuted = false;
+    isVoiceEnabled = false;
+    isMicMuted = true;
     volume = 80;
     lastNonMutedVolume = 80;
     private readonly defaultVolume = 80;
@@ -76,6 +79,8 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
         playsinline: 1,
         rel: 0,
         modestbranding: 1,
+        enablejsapi: 1,
+        origin: typeof window !== 'undefined' ? window.location.origin : undefined,
     };
     roomTheme = 'cream';
     roomPassword = '';
@@ -100,7 +105,8 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
         private socketService: SocketService,
         private roomService: RoomService,
         private roomSyncService: RoomSyncService,
-        private http: HttpClient
+        private http: HttpClient,
+        private voiceChatService: VoiceChatService
     ) { }
 
     async ngOnInit() {
@@ -164,7 +170,13 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
 
     connectToSocket() {
         if (!this.userId) {
-            this.userId = localStorage.getItem('lissenly_user_id') || localStorage.getItem('lissenly_name') || this.nickname || 'Guest';
+            const savedUserId = (localStorage.getItem('lissenly_user_id') || '').trim();
+            if (savedUserId) {
+                this.userId = savedUserId;
+            } else {
+                this.userId = `guest-${Math.random().toString(36).slice(2, 10)}`;
+                localStorage.setItem('lissenly_user_id', this.userId);
+            }
         }
         this.isHost = (this.room.hostId === this.userId || this.room.hostId === 'Admin');
         this.syncMode = this.isHost ? 'host' : 'guest';
@@ -172,6 +184,7 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
         this.lastNonMutedVolume = this.volume || this.defaultVolume;
         this.socketService.connect(this.roomId)
             .then(() => {
+                this.voiceChatService.init(this.roomId, this.userId);
                 if (!this.hasJoinedRoom) {
                     this.hasJoinedRoom = true;
                     try {
@@ -181,6 +194,7 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
                         console.error('Join room failed', error);
                     }
                 }
+                this.syncVoiceMembers();
                 this.sendInitialSyncRequest();
             })
             .catch((error) => console.error('WebSocket connect failed', error));
@@ -190,7 +204,19 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
         if (data?.type === 'ROOM_MEMBERS') {
             if (this.room && Array.isArray(data.members)) {
                 this.room.members = this.deduplicateMembers(data.members);
+                this.syncVoiceMembers();
+
+                const joinedUserId = typeof data.userId === 'string' ? data.userId.trim() : '';
+                const isAnotherUserJoining = data.event === 'JOIN' && !!joinedUserId && joinedUserId !== this.userId;
+                if (this.isHost && isAnotherUserJoining && this.room.playlist?.length) {
+                    this.socketService.sendQueueState(this.roomId, this.roomSyncService.buildQueuePayload(this.roomId, this.room));
+                }
             }
+            return;
+        }
+
+        if (data?.type === SyncMessageType.VOICE_OFFER || data?.type === SyncMessageType.VOICE_ANSWER || data?.type === SyncMessageType.VOICE_ICE_CANDIDATE) {
+            this.voiceChatService.handleSignal(data).catch((err) => console.error('Voice signal handling failed', err));
             return;
         }
 
@@ -487,24 +513,39 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
                 return;
             }
 
+            const applyQueueStateToPlayer = () => {
+                if (!this.player) return;
+                const targetTime = this.roomSyncService.computeRemoteTime(remoteState);
+                this.room.currentTime = targetTime;
+
+                this.suppressPlayerStateBroadcast = true;
+                if (Math.abs(this.player.getCurrentTime() - targetTime) > 0.35) {
+                    this.player.seekTo(targetTime, true);
+                }
+
+                if (this.room.playing) {
+                    this.restorePlayerVolume();
+                    this.player.playVideo();
+                    this.scheduleRemotePlayRetry(targetTime);
+                } else {
+                    this.player.pauseVideo();
+                }
+
+                this.updatePlayerUIFromState(this.room);
+                window.setTimeout(() => (this.suppressPlayerStateBroadcast = false), 180);
+            };
+
             if (remoteVideoId && this.player && currentVideoId !== remoteVideoId) {
                 this.suppressPlayerStateBroadcast = true;
                 this.setPlayerVideo(remoteVideoId, remoteState.currentTime);
                 window.setTimeout(() => {
                     this.restorePlayerVolume();
-                    if (this.room.playing) {
-                        this.player.playVideo();
-                    } else {
-                        this.player.pauseVideo();
-                    }
-                    this.updatePlayerUIFromState(this.room);
-                    window.setTimeout(() => (this.suppressPlayerStateBroadcast = false), 150);
+                    applyQueueStateToPlayer();
                 }, 300);
                 return;
             }
 
-            this.updatePlayerUIFromState(this.room);
-            window.setTimeout(() => (this.suppressPlayerStateBroadcast = false), 150);
+            applyQueueStateToPlayer();
             return;
         }
 
@@ -890,6 +931,37 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
         // removed duplicate websocket join call to avoid double member entries
     }
 
+    private syncVoiceMembers() {
+        const members = (this.room?.members || [])
+            .map((m) => this.resolveMemberName(m))
+            .filter((name) => !!name);
+        this.voiceChatService.updateMembers(members);
+    }
+
+    async toggleVoiceChat() {
+        try {
+            if (this.isVoiceEnabled) {
+                this.voiceChatService.disableVoice();
+                this.isVoiceEnabled = false;
+                this.isMicMuted = true;
+                return;
+            }
+            await this.voiceChatService.enableVoice();
+            this.isVoiceEnabled = this.voiceChatService.isVoiceEnabled;
+            this.isMicMuted = this.voiceChatService.isMicMuted;
+            this.syncVoiceMembers();
+        } catch (error) {
+            console.error('Enable voice failed', error);
+            this.showToastMessage('Không bật được micro. Hãy cấp quyền micro và thử lại.');
+        }
+    }
+
+    toggleMicMute() {
+        if (!this.isVoiceEnabled) return;
+        this.voiceChatService.toggleMicMute();
+        this.isMicMuted = this.voiceChatService.isMicMuted;
+    }
+
     ngOnDestroy() {
         if (typeof window !== 'undefined') {
             window.clearInterval(this.progressTimer);
@@ -905,6 +977,7 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
             }
             this.hasJoinedRoom = false;
         }
+        this.voiceChatService.disableVoice();
         this.socketService.disconnect();
     }
 }

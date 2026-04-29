@@ -25,7 +25,18 @@ export enum SyncMessageType {
     PLAY_STATE = 'PLAY_STATE',
     SEEK_STATE = 'SEEK_STATE',
     QUEUE_STATE = 'QUEUE_STATE',
-    SYNC_REQUEST = 'SYNC_REQUEST'
+    SYNC_REQUEST = 'SYNC_REQUEST',
+    VOICE_OFFER = 'VOICE_OFFER',
+    VOICE_ANSWER = 'VOICE_ANSWER',
+    VOICE_ICE_CANDIDATE = 'VOICE_ICE_CANDIDATE'
+}
+
+export interface VoiceSignalPayload {
+    type: SyncMessageType.VOICE_OFFER | SyncMessageType.VOICE_ANSWER | SyncMessageType.VOICE_ICE_CANDIDATE;
+    roomId: string;
+    fromUserId: string;
+    toUserId?: string;
+    payload: any;
 }
 
 interface SyncPayloadBase {
