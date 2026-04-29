@@ -87,6 +87,11 @@
                             (ready)="onPlayerReady()"
                             (stateChange)="onStateChange($event)" [width]="1000" [height]="560">
                         </youtube-player>
+                        <div class="guest-audio-guard" *ngIf="!isHost && !guestManualAudioEnabled">
+                            <button type="button" class="btn-action highlight" (click)="enableGuestManualAudio()">
+                                <i class="ph ph-speaker-high"></i> Bật âm thanh thủ công
+                            </button>
+                        </div>
                     </div>
                     <div class="now-playing-bar" *ngIf="room.playlist[room.currentSongIndex]">
                         <div class="np-left">

@@ -50,6 +50,7 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
     toastMessage = '';
     showToast = false;
     syncMode: 'host' | 'guest' = 'guest';
+    guestManualAudioEnabled = false;
     joinedStateApplied = false;
     private hasJoinedRoom = false;
     dragOverIndex: number | null = null;
@@ -407,6 +408,7 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
     private scheduleRemotePlayRetry(targetTime: number) {
         if (typeof window === 'undefined' || !this.player) return;
         window.clearTimeout(this.remotePlayRetryTimer);
+        window.clearTimeout(this.remotePlayRetryTimer);
         this.remotePlayRetryTimer = window.setTimeout(() => {
             if (!this.player || !this.room?.playing) return;
             const state = this.player.getPlayerState?.();
@@ -415,6 +417,30 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.player.playVideo();
             }
         }, 900);
+    }
+
+    enableGuestManualAudio() {
+        if (this.isHost) return;
+        this.guestManualAudioEnabled = true;
+        if (!this.player || !this.room?.playlist?.length) return;
+
+        const targetTime = Math.max(0, this.room.currentTime || 0);
+        const currentVideoId = this.currentVideoId || this.room.playlist[this.room.currentSongIndex]?.videoId;
+        if (currentVideoId) {
+            this.setPlayerVideo(currentVideoId, targetTime);
+        }
+
+        window.setTimeout(() => {
+            if (!this.player) return;
+            if (Math.abs(this.player.getCurrentTime() - targetTime) > 0.35) {
+                this.player.seekTo(targetTime, true);
+            }
+            this.restorePlayerVolume();
+            if (this.room.playing) {
+                this.player.playVideo();
+                this.scheduleRemotePlayRetry(targetTime);
+            }
+        }, 250);
     }
 
     scrollMessagesToBottom() {
@@ -524,9 +550,13 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 if (this.room.playing) {
-                    this.restorePlayerVolume();
-                    this.player.playVideo();
-                    this.scheduleRemotePlayRetry(targetTime);
+                    if (this.isHost || this.guestManualAudioEnabled) {
+                        this.restorePlayerVolume();
+                        this.player.playVideo();
+                        this.scheduleRemotePlayRetry(targetTime);
+                    } else {
+                        this.player.pauseVideo();
+                    }
                 } else {
                     this.player.pauseVideo();
                 }
@@ -576,16 +606,20 @@ export class RoomComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.player.seekTo(targetTime, true);
             }
             if (this.room.playing) {
-                this.restorePlayerVolume();
-                window.setTimeout(() => {
-                    this.player.playVideo();
+                if (this.isHost || this.guestManualAudioEnabled) {
+                    this.restorePlayerVolume();
                     window.setTimeout(() => {
-                        if (this.room.playing && this.player.getPlayerState() !== 1) {
-                            this.player.playVideo();
-                        }
-                    }, 250);
-                    this.scheduleRemotePlayRetry(targetTime);
-                }, 50);
+                        this.player.playVideo();
+                        window.setTimeout(() => {
+                            if (this.room.playing && this.player.getPlayerState() !== 1) {
+                                this.player.playVideo();
+                            }
+                        }, 250);
+                        this.scheduleRemotePlayRetry(targetTime);
+                    }, 50);
+                } else {
+                    this.player.pauseVideo();
+                }
             } else {
                 this.player.pauseVideo();
             }
